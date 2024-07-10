@@ -69,9 +69,11 @@ router.post("/signup/clients", async (req, res) => {
 
 router.post("/login/clients", async (req, res) => {
   const { email } = req.body;
+  console.log(email);
 
   try {
     const client = await Customer.findOne({ email });
+    console.log(client);
     if (!client) {
       return res.status(404).json({ message: "Username not found" });
     }

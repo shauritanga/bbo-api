@@ -57,3 +57,8 @@ module.exports.getAllExecutions = async (req, res) => {
     console.log(error);
   }
 };
+
+module.exports.getOrderExecutions = async (req, res) => {
+  const { id } = req.params;
+  console.log(id);
+};

@@ -2,55 +2,62 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const CustomerCounter = require("./counter/customerCounter.js");
 
-const customerSchema = mongoose.Schema({
-  customerId: { type: String, unique: true },
-  account: {
-    type: String,
+const customerSchema = mongoose.Schema(
+  {
+    customerId: { type: String, unique: true },
+    account: {
+      type: String,
+    },
+    name: {
+      type: String,
+    },
+    bankName: {
+      type: String,
+    },
+    category: {
+      type: String,
+    },
+    country: {
+      type: String,
+    },
+    phone: {
+      type: String,
+    },
+    idType: {
+      type: String,
+    },
+    idNumber: {
+      type: String,
+    },
+    email: {
+      type: String,
+      unique: true,
+    },
+    password: {
+      type: String,
+    },
+    dob: {
+      type: Date,
+    },
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+    status: {
+      type: String,
+      default: "pending",
+    },
+    wallet: {
+      type: Number,
+      default: 0,
+    },
+    profileComplete: {
+      type: Boolean,
+      default: false,
+    },
   },
-  name: {
-    type: String,
-  },
-  bankName: {
-    type: String,
-  },
-  category: {
-    type: String,
-  },
-  country: {
-    type: String,
-  },
-  phone: {
-    type: String,
-  },
-  idType: {
-    type: String,
-  },
-  idNumber: {
-    type: String,
-  },
-  email: {
-    type: String,
-    unique: true,
-  },
-  password: {
-    type: String,
-  },
-  dob: {
-    type: Date,
-  },
-  verified: {
-    type: Boolean,
-    default: false,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  status: {
-    type: String,
-    default: "pending",
-  },
-});
+  { timestamps: true }
+);
 
 customerSchema.pre("save", async function (next) {
   const doc = this;
