@@ -18,13 +18,11 @@ module.exports.getAllTransactions = async (req, res) => {
 
     const skip = (page - 1) * limit; // Calculate the number of documents to skip
 
-    const transactions = await Transaction.find({}, { __v: 0 })
-      .populate("payee")
-      .populate("method")
+    const transactions = await Transaction.find({ status: "new" })
       .skip(skip)
       .limit(limit);
 
-    const totalDocuments = await Transaction.countDocuments();
+    const totalDocuments = transactions.length;
     const totalPages = Math.ceil(totalDocuments / limit);
 
     res.status(200).json({
@@ -73,7 +71,9 @@ module.exports.getTransactionByCustomerId = async (req, res) => {
   const customerId = req.params.id;
 
   try {
-    const transactions = await Transaction.find({ payee: customerId });
+    const transactions = await Transaction.find({ client_id: customerId }).sort(
+      { created_at: 1 }
+    );
     if (!transactions) {
       return res.status(404).json({ message: "Transactions not found" });
     }

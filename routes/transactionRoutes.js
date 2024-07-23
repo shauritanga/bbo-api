@@ -10,7 +10,7 @@ const {
 
 const router = express.Router();
 //router.use(passport.authenticate("local", { session: false }));
-router.get("/customer/:id", getTransactionByCustomerId);
+router.get("/:id", getTransactionByCustomerId);
 router.post("/", createTransaction);
 router.get("/", getAllTransactions);
 router.patch("/:id", updateTransaction);

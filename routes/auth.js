@@ -2,15 +2,17 @@ const express = require("express");
 const Employee = require("../models/employee.js");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Customer = require("../models/customer.js");
+const User = require("../models/user.js");
 const Otp = require("../models/otp.js");
 const router = express.Router();
 
 const generateActivationToken = () => {
   return crypto.randomBytes(32).toString("hex");
 };
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 // Generate a random OTP
 const generateOTP = () => {
@@ -20,10 +22,11 @@ const generateOTP = () => {
 const activationTokens = {};
 
 let transporter = nodemailer.createTransport({
-  service: "Gmail",
+  host: "mail.alphafunds.co.tz",
+  // port: 587,
   auth: {
-    user: "curtisisaac36@gmail.com", // replace with your email
-    pass: "mpee ioxs pbyv juss", // replace with your password
+    user: "admin@alphafunds.co.tz", // replace with your email
+    pass: "vct6?99^i}^]", // replace with your password
   },
 });
 
@@ -33,22 +36,17 @@ router.post("/signup/clients", async (req, res) => {
 
   activationTokens[email] = token;
 
-  const activationLink = `https://client.alphafunds.co.tz/activate?email=${encodeURIComponent(
-    email
-  )}&token=${token}`;
+  const activationLink = `${
+    process.env.CLIENT_URL
+  }/activate?email=${encodeURIComponent(email)}&token=${token}`;
 
   const mailOptions = {
-    from: "curtisisaac36@gmail.com",
+    from: '"Alpha Capital" admin@alphafunds.co.tz',
     to: email,
     subject: "Account Activation",
     text: `Click the following link to activate your account: ${activationLink}`,
   };
   try {
-    // Send email with PDF attachment
-    let info = await transporter.sendMail(mailOptions);
-    if (!info) {
-      throw new Error("Failed to send email");
-    }
     const customer = Customer({
       name: req.body.name,
       email: req.body.email,
@@ -58,22 +56,31 @@ router.post("/signup/clients", async (req, res) => {
       idType: req.body.identity,
       idNumber: req.body.identity_no,
     });
-    const result = await customer.save();
-    console.log(result);
 
-    res.status(200).json({ message: "Email sent successfully" });
+    const result = await customer.save();
+    const info = await transporter.sendMail(mailOptions);
+    if (!info) {
+      throw new Error("Failed to send email");
+    }
+    res.status(200).json({
+      message:
+        "We appreciate your registration! Kindly check your email to complete the activation process",
+    });
   } catch (error) {
+    if (error.code === 11000) {
+      return res
+        .status(500)
+        .json({ message: `${req.body.email} is already registered` });
+    }
     res.status(500).json({ message: `${error}` });
   }
 });
 
 router.post("/login/clients", async (req, res) => {
   const { email } = req.body;
-  console.log(email);
 
   try {
     const client = await Customer.findOne({ email });
-    console.log(client);
     if (!client) {
       return res.status(404).json({ message: "Username not found" });
     }
@@ -91,8 +98,7 @@ router.post("/login/clients", async (req, res) => {
 });
 
 router.post("/login/employees", async (req, res) => {
-  const { username, password } = req.body;
-  console.log({ username, password });
+  const { username } = req.body;
 
   try {
     const employee = await Employee.findOne(
@@ -101,11 +107,7 @@ router.post("/login/employees", async (req, res) => {
     ).populate("role");
 
     if (!employee) {
-      return res.status(404).json({ message: "Username not found" });
-    }
-
-    if (!employee.comparePassword(password)) {
-      return res.status(400).json({ message: "Wrong password" });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
     // Token Generation (for authentication in future requests)
     const token = jwt.sign({ employeeId: employee._id }, "ilovecode");
@@ -116,7 +118,6 @@ router.post("/login/employees", async (req, res) => {
       user: employee,
     });
   } catch (error) {
-    console.error("Error during login:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -141,21 +142,32 @@ router.get("/activate", async (req, res) => {
     // }
     //sending response
     res.status(200).json({ message: "Account activated successfully" });
-
-    console.log("email and token are present");
   } else {
     res.status(400).send("Invalid request");
   }
 });
 
-router.post("/otp", async (req, res) => {
-  const { email } = req.body;
+router.post("/clients/otp", async (req, res) => {
+  const { email, password } = req.body;
   const otp = generateOTP();
 
-  // otps[email] = otp;
+  const user = await Customer.findOne({ email });
+  if (!user) {
+    return res.status(400).json({ message: "Invalid credentials" });
+  }
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
+    return res.status(400).json({ message: "Invalid credentials" });
+  }
+
+  if (!user.verified) {
+    return res
+      .status(403)
+      .json({ message: "Please activate your account to continue" });
+  }
 
   const mailOptions = {
-    from: "curtisisaac36@gmail.com",
+    from: '"Alpha Capital" admin@alphafunds.co.tz',
     to: email,
     subject: "One-Time Password (OTP)",
     text: `Your One-Time Password (OTP) is: ${otp}`,
@@ -165,10 +177,42 @@ router.post("/otp", async (req, res) => {
   if (!info) {
     return res
       .status(500)
-      .send("Failed to send OTP email. Please try again later.");
+      .json({ message: "Failed to send OTP email. Please try again later." });
   }
   await Otp.create({ email, otp });
-  res.send("OTP email sent successfully!");
+  res.status(200).json({ message: "Please check your email for the OTP" });
+});
+
+router.post("/otp", async (req, res) => {
+  const { email, password } = req.body;
+  const otp = generateOTP();
+
+  try {
+    const employee = await Employee.findOne({ email });
+    if (!employee) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+    const isMatch = await employee.comparePassword(password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const mailOptions = {
+      from: '"Alpha Capital" admin@alphafunds.co.tz',
+      to: email,
+      subject: "One-Time Password (OTP)",
+      text: `Your One-Time Password (OTP) is: ${otp}`,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    if (!info) {
+      throw new Error("Fail to send resent passwordd email");
+    }
+    await Otp.create({ email, otp });
+    res.status(200).json({ message: "OTP email sent successfully!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 router.post("/verify-otp", async (req, res) => {
@@ -177,18 +221,106 @@ router.post("/verify-otp", async (req, res) => {
   if (!user) {
     return res.status(400).send("Invalid OTP");
   }
-  //await Otp.deleteOne({ email, otp });
+  await Otp.deleteOne({ email, otp });
   res.send(user);
 });
 
-router.post("/reset-password", async (req, res) => {
+router.post("/clients/request-reset-password", async (req, res) => {
+  console.log(req.body);
+  const { email } = req.body;
+
+  const client = await User.findOne({ email });
+  if (!client) {
+    return res.status(400).json({
+      message:
+        "You need to register with us before you proceed! Please register",
+    });
+  }
+
+  const token = generateActivationToken();
+  const resetPasswordLink = `${
+    process.env.CLIENT_URL
+  }/reset-password?email=${encodeURIComponent(email)}&token=${token}`;
+
+  const mailOptions = {
+    from: '"Alpha Capital" admin@alphafunds.co.tz',
+    to: email,
+    subject: "Reset Password",
+    text: `Visit the link given to reset password: ${resetPasswordLink}`,
+  };
+  const info = await transporter.sendMail(mailOptions);
+
+  if (!info) {
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+  res.status(200).json({
+    message: `Please ckeck your email for a password reset link sent to ${email}`,
+  });
+});
+
+router.post("/clients/reset-password", async (req, res) => {
   const { email, password } = req.body;
-  console.log({ email, password });
-  const user = await Employee.findOne({ email });
+
+  const user = await Customer.findOne({ email });
   if (!user) {
-    return res.status(404).send("User not found");
+    return res
+      .status(400)
+      .json({ message: `${email} is not a registered user` });
   }
   user.password = password;
+  const updatedUser = await user.save();
+  if (!updatedUser) {
+    return res
+      .status(400)
+      .json({ message: `$Password update failed, try again` });
+  }
+
+  res
+    .status(200)
+    .json({ message: "You have successfully updated your password" });
+});
+
+/*====================== ADMIN ==================================*/
+router.post("/admin/request-reset-password", async (req, res) => {
+  const { email } = req.body;
+
+  const user = await Employee.findOne({ email });
+  if (!user) {
+    return res.status(400).json({
+      message:
+        "You need to register with us before you proceed! Please register",
+    });
+  }
+
+  const token = generateActivationToken();
+  const resetPasswordLink = `${
+    process.env.ADMIN_URL
+  }/reset-password?email=${encodeURIComponent(email)}&token=${token}`;
+
+  const mailOptions = {
+    from: '"Alpha Capital" admin@alphafunds.co.tz',
+    to: email,
+    subject: "Reset Password",
+    text: `Visit the link given to reset password: ${resetPasswordLink}`,
+  };
+  const info = await transporter.sendMail(mailOptions);
+
+  if (!info) {
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+  res.status(200).json({
+    message: `Please ckeck your email for a password reset link sent to ${email}`,
+  });
+});
+
+router.post("/employees/reset-password", async (req, res) => {
+  const { email, password } = req.body;
+  const user = await Employee.findOne({ email });
+  if (user === null) {
+    return res.status(400).json({ message: "User not found" });
+  }
+  user.password = password;
+  user.status = "active";
   await user.save();
   res.send("Password reset successfully");
 });

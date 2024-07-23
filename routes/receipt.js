@@ -4,6 +4,7 @@ const {
   getAllReceipts,
   getReceiptMonthly,
 } = require("../controllers/receipts.js");
+const Transaction = require("../models/transaction.js");
 const route = express.Router();
 
 route.get("/all", getAllReceipts);
@@ -16,12 +17,11 @@ route.get("/", async (req, res) => {
 
     const skip = (page - 1) * limit; // Calculate the number of documents to skip
 
-    const receipts = await Receipt.find({}, { __v: 0 })
-      .populate("payee")
+    const receipts = await Transaction.find({ category: "receipt" })
       .skip(skip)
       .limit(limit);
 
-    const totalDocuments = await Receipt.countDocuments();
+    const totalDocuments = await receipts.length;
     const totalPages = Math.ceil(totalDocuments / limit);
 
     res.status(200).json({
@@ -35,15 +35,34 @@ route.get("/", async (req, res) => {
   }
 });
 route.post("/", async (req, res) => {
-  const receipt = Receipt({
-    ...req.body,
-  });
+  const {
+    date,
+    amount,
+    reference,
+    category,
+    description,
+    status,
+    account_id,
+    client_id,
+    payment_method_id,
+  } = req.body;
+
   try {
-    const response = await receipt.save();
-    res.status(200).json(response);
-  } catch (error) {
-    res.status(500).json(error);
-  }
+    const receipt = Transaction({
+      title: description,
+      amount,
+      transaction_date: date,
+      category,
+      account_id,
+      client_id,
+      reference,
+      status,
+      payment_method_id,
+      description,
+    });
+    await receipt.save();
+    res.status(201).json({ message: "Receipt created successfully" });
+  } catch (error) {}
 });
 
 route.get("/:id", async (req, res) => {

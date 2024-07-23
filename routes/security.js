@@ -25,8 +25,9 @@ route.post("/", async (req, res) => {
 });
 
 route.patch("/:id", async (req, res) => {
-  const security = await Security.findOne({ _id: req.params.id });
-  console.log(security);
+  console.log(req.body);
+  // const security = await Security.findOne({ _id: req.params.id });
+
   res.send({ message: "Data saved successfully" });
 });
 module.exports = route;

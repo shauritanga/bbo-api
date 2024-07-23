@@ -29,16 +29,28 @@ const vatRoute = require("./routes/vat.js");
 const brokerageRoute = require("./routes/brokerage.js");
 const fidelityRoute = require("./routes/fidelity.js");
 const executionRoute = require("./routes/execution.js");
+const path = require("path");
+const fileRoute = require("./routes/uploadFile.js");
+const profileRoutes = require("./routes/profile.js");
+const accountRoutes = require("./routes/account.js");
+
 dotenv.config();
 
 const { protect } = "./middleware/auth.js";
 
 const app = express();
+// const session = require("express-session");
 // app.use(
 //   session({
-//     secret: process.env.SESSION_SECRET,
+//     secret: process.env.SESSION_SECRET, // Choose a strong secret
 //     resave: false,
 //     saveUninitialized: false,
+//     cookie: {
+//       maxAge: 20000, // 20 seconds in milliseconds
+//       sameSite: "strict", // Adjust this based on your security needs
+//       httpOnly: true, // Prevent client-side access to cookie
+//       secure: process.env.NODE_ENV === "production", // Use in production for HTTPS
+//     },
 //   })
 // );
 
@@ -48,8 +60,10 @@ app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(cors());
 app.options("/api/v1/financial-years", cors());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // app.use(passport.initialize());
+
 // app.use(passport.session());
 
 app.use("/api/v1/auth", authRoute);
@@ -69,8 +83,12 @@ app.use("/api/v1/employees", employeeRoute);
 app.use("/api/v1/receipts", receiptRoute);
 app.use("/api/v1/roles", roleRoute);
 app.use("/api/v1/executions", executionRoute);
+app.use("/api/v1/uploads", fileRoute);
+app.use("/api/v1/profiles", profileRoutes);
+app.use("/api/v1/accounts", accountRoutes);
 
 //Fees
+
 app.use("/api/v1/dse", dseRoute);
 app.use("/api/v1/cds", cdsRoute);
 app.use("/api/v1/csma", csmaRoute);
@@ -82,8 +100,6 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
-const MONGO_URL =
-  "mongodb+srv://placd36:bETVYL22IAVJefYX@cluster0.wrirmlf.mongodb.net/bbo?retryWrites=true&w=majority&appName=Cluster0";
 mongoose
   .connect(process.env.MONGO_URL)
   .then((connect) =>

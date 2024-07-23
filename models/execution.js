@@ -5,13 +5,8 @@ const dseSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  customer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Customer",
-  },
   order: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Order",
+    type: String,
   },
   slip: {
     type: String,

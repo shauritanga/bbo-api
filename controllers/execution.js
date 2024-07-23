@@ -1,10 +1,13 @@
 const Execution = require("../models/execution.js");
 const Order = require("../models/order.js");
+const Transaction = require("../models/transaction.js");
 module.exports.createExecution = async (req, res) => {
   //Validate inputs
   try {
+    const { amount, date, customer, ...rest } = req.body;
     const execution = new Execution({
-      ...req.body,
+      amount,
+      ...rest,
     });
     const executionResult = await execution.save();
     if (!executionResult) {
@@ -15,10 +18,10 @@ module.exports.createExecution = async (req, res) => {
     const id = req.body.order;
     const vol = req.body.executed;
     const orders = await Order.findOneAndUpdate(
-      { _id: id },
-      { $inc: { balance: -vol } }
+      { uid: id },
+      { $inc: { executed: vol } }
     );
-    console.log(orders);
+
     res.status(200).json({ success: true, data: executionResult });
   } catch (error) {
     console.log(error);
@@ -28,8 +31,8 @@ module.exports.createExecution = async (req, res) => {
 module.exports.getExecution = async (req, res) => {
   const id = req.params.id;
   try {
-    const executions = await Execution.find({ order: id }).populate("customer");
-    console.log(executions);
+    const executions = await Execution.find({ order: id });
+
     if (!executions) {
       return res
         .status(404)
@@ -42,11 +45,9 @@ module.exports.getExecution = async (req, res) => {
 };
 
 module.exports.getAllExecutions = async (req, res) => {
-  const { customerId } = req.query;
+  const { orderId } = req.query;
   try {
-    const executions = await Execution.find({ customer: customerId })
-      .populate("customer")
-      .populate("order");
+    const executions = await Execution.find({ order: orderId });
     if (!executions) {
       return res
         .status(404)
