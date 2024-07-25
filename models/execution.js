@@ -1,11 +1,14 @@
 const mongoose = require("mongoose");
 
 const dseSchema = new mongoose.Schema({
-  date: {
+  trading_date: {
     type: Date,
     default: Date.now,
   },
-  order: {
+  settlement_date: {
+    type: Date,
+  },
+  order_id: {
     type: String,
   },
   slip: {
