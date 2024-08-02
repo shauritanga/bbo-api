@@ -17,12 +17,14 @@ route.get("/", async (req, res) => {
 
     const skip = (page - 1) * limit; // Calculate the number of documents to skip
 
-    const payments = await Payment.find({}, { __v: 0 })
-      .populate("payee")
+    const payments = await Transaction.find({ category: "payment" })
       .skip(skip)
       .limit(limit);
 
-    const totalDocuments = await Payment.countDocuments();
+    console.log(payments);
+
+    const totalDocuments = (await Transaction.find({ category: "payment" }))
+      .length;
     const totalPages = Math.ceil(totalDocuments / limit);
 
     res.status(200).json({

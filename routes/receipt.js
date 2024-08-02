@@ -21,7 +21,8 @@ route.get("/", async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    const totalDocuments = await receipts.length;
+    const totalDocuments = (await Transaction.find({ category: "receipt" }))
+      .length;
     const totalPages = Math.ceil(totalDocuments / limit);
 
     res.status(200).json({

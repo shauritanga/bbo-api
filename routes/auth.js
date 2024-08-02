@@ -47,7 +47,7 @@ router.post("/signup/clients", async (req, res) => {
     text: `Click the following link to activate your account: ${activationLink}`,
   };
   try {
-    const customer = Customer({
+    const customer = User({
       name: req.body.name,
       email: req.body.email,
       password: req.body.password,
@@ -80,11 +80,11 @@ router.post("/login/clients", async (req, res) => {
   const { email } = req.body;
 
   try {
-    const client = await Customer.findOne({ email });
+    const client = await User.findOne({ email });
     if (!client) {
       return res.status(404).json({ message: "Username not found" });
     }
-    const token = jwt.sign({ clientId: client._id }, "ilovecode");
+    const token = jwt.sign({ clientId: client.id }, "ilovecode");
 
     res.json({
       message: "Login successful",
@@ -151,7 +151,7 @@ router.post("/clients/otp", async (req, res) => {
   const { email, password } = req.body;
   const otp = generateOTP();
 
-  const user = await Customer.findOne({ email });
+  const user = await User.findOne({ email });
   if (!user) {
     return res.status(400).json({ message: "Invalid credentials" });
   }
@@ -261,7 +261,7 @@ router.post("/clients/request-reset-password", async (req, res) => {
 router.post("/clients/reset-password", async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await Customer.findOne({ email });
+  const user = await User.findOne({ email });
   if (!user) {
     return res
       .status(400)
@@ -281,7 +281,7 @@ router.post("/clients/reset-password", async (req, res) => {
 });
 
 /*====================== ADMIN ==================================*/
-router.post("/admin/request-reset-password", async (req, res) => {
+router.post("/employees/request-reset-password", async (req, res) => {
   const { email } = req.body;
 
   const user = await Employee.findOne({ email });

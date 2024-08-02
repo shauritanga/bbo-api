@@ -17,13 +17,9 @@ route.get("/", async (req, res) => {
 
 route.get("/all/:id", async (req, res) => {
   try {
-    const orders = await Order.find({ customer: req.params.id });
+    const orders = await Order.find({ client_id: req.params.id });
 
-    if (!orders) {
-      res.status(404).json({ message: "No orders found" });
-    } else {
-      res.status(200).json(orders);
-    }
+    res.status(200).json(orders);
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: error.message });
@@ -31,7 +27,10 @@ route.get("/all/:id", async (req, res) => {
 });
 route.get("/buy/:id", async (req, res) => {
   try {
-    const orders = await Order.find({ customer: req.params.id, action: "buy" });
+    const orders = await Order.find({
+      client_id: req.params.id,
+      type: "buy",
+    });
 
     if (!orders) {
       res.status(404).json({ message: "No orders found" });
@@ -45,7 +44,7 @@ route.get("/buy/:id", async (req, res) => {
 });
 route.get("/sell/:id", async (req, res) => {
   try {
-    const orders = await Order.find({ customer: req.params.id, type: "sell" });
+    const orders = await Order.find({ client_id: req.params.id, type: "sell" });
 
     if (!orders) {
       res.status(404).json({ message: "No orders found" });
@@ -67,7 +66,6 @@ route.get("/dealing", async (req, res) => {
     const orders = await Order.find({ balance: { $ne: 0 } })
       .skip(skip)
       .limit(limit);
-    console.log(orders);
 
     const docs = await Order.find({ balance: { $ne: 0 } });
     const totalDocuments = docs.length;
@@ -87,7 +85,6 @@ route.get("/client/:id", async (req, res) => {
   console.log(req.params.id);
   try {
     const order = await Order.find({ client_id: req.params.id });
-    console.log(order);
 
     res.send(order);
   } catch (error) {

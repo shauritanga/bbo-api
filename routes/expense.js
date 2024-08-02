@@ -4,6 +4,7 @@ const {
   getAllExpenses,
   getExpenseMonthly,
 } = require("../controllers/expense.js");
+const Transaction = require("../models/transaction.js");
 const route = express.Router();
 
 route.get("/monthly", getExpenseMonthly);
@@ -17,12 +18,12 @@ route.get("/", async (req, res) => {
 
     const skip = (page - 1) * limit; // Calculate the number of documents to skip
 
-    const expenses = await Expense.find({}, { __v: 0 })
-      .populate("payee")
+    const expenses = await Transaction.find({ category: "expense" })
       .skip(skip)
       .limit(limit);
 
-    const totalDocuments = await Expense.countDocuments();
+    const totalDocuments = (await Transaction.find({ category: "expense" }))
+      .length;
     const totalPages = Math.ceil(totalDocuments / limit);
 
     res.status(200).json({

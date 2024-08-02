@@ -9,10 +9,14 @@ module.exports.createExecution = async (req, res) => {
 
   try {
     session.startTransaction();
-    const { amount, trading_date, customer, slip, type, ...rest } = req.body;
+    const { amount, trading_date, customer, slip, type, total, ...rest } =
+      req.body;
     const execution = new Execution({
       amount,
+      client_id: customer,
+      type,
       trading_date,
+      payout: total,
       slip,
       ...rest,
     });
@@ -62,7 +66,27 @@ module.exports.createExecution = async (req, res) => {
 module.exports.getExecution = async (req, res) => {
   const id = req.params.id;
   try {
-    const executions = await Execution.find({ order_id: id });
+    const executions = await Execution.find({ client_id: id });
+
+    if (!executions) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Execution not found" });
+    }
+    res.status(200).json(executions);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+module.exports.getExecutionByClientId = async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const executions = await Execution.find({
+      client_id: id,
+      status: "approved",
+    });
 
     if (!executions) {
       return res

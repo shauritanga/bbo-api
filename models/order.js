@@ -3,6 +3,7 @@ const OrderCounter = require("./counter/orderCounter.js");
 
 const orderSchema = mongoose.Schema(
   {
+    id: { type: String },
     uid: { type: String, unique: true },
     client_id: { type: String, required: true },
     volume: { type: Number },

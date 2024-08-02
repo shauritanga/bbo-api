@@ -9,7 +9,7 @@ module.exports.getAllOrders = async (req, res) => {
     const skip = (page - 1) * limit; // skip
 
     const orders = await Order.find({})
-      .sort({ createdAt: -1 })
+      // .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 

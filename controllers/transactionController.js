@@ -72,8 +72,9 @@ module.exports.getTransactionByCustomerId = async (req, res) => {
 
   try {
     const transactions = await Transaction.find({ client_id: customerId }).sort(
-      { created_at: 1 }
+      { transaction_date: 1 }
     );
+    console.log("this");
     if (!transactions) {
       return res.status(404).json({ message: "Transactions not found" });
     }

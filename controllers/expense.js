@@ -1,11 +1,12 @@
 const Expense = require("../models/expense.js");
+const Transaction = require("../models/transaction.js");
 
 module.exports.getAllExpenses = async (req, res) => {
-  const expenses = await Expense.find({}, { _id: 0, __v: 0 });
-  if (!expenses) {
-    return res.status(404).json({ message: "No expenses found" });
-  }
-  res.status(200).json(expenses);
+  try {
+    const expenses = await Transaction.find({ category: "expenses" });
+    console.log(expenses);
+    res.status(200).json(expenses);
+  } catch (error) {}
 };
 
 module.exports.getExpenseMonthly = async (req, res) => {
