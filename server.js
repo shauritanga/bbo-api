@@ -88,6 +88,7 @@ app.use("/api/v1/profiles", profileRoutes);
 app.use("/api/v1/accounts", accountRoutes);
 
 //Fees
+// MONGO_URL=mongodb+srv://alphacapital:Alphafunds2024@cluster0.wrirmlf.mongodb.net/bbo?retryWrites=true&w=majority&appName=Cluster0
 
 app.use("/api/v1/dse", dseRoute);
 app.use("/api/v1/cds", cdsRoute);
