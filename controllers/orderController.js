@@ -84,6 +84,17 @@ module.exports.adminDeleteOrder = async (req, res) => {
     res.status(200).json({ message: "Order deleted successful" });
   } catch (error) {}
 };
+
+module.exports.getOrderById = async (req, res) => {
+  const { id } = req.params;
+  console.log(id);
+  try {
+    const foundOrder = await Order.findById(id);
+    res.status(200).json(foundOrder);
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports.getPendingOrders = async (req, res) => {};
 module.exports.getCompleteOrders = async (req, res) => {};
 module.exports.getUnderProcessOrders = (req, res) => {};

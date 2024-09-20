@@ -5,6 +5,7 @@ const {
   createOrder,
   adminDeleteOrder,
   adminUpdateOrder,
+  getOrderById,
 } = require("../controllers/orderController.js");
 const Customer = require("../models/customer.js");
 const Security = require("../models/security.js");
@@ -12,6 +13,7 @@ const route = express.Router();
 
 //ADMIN ROUTE
 route.get("/all", getAllOrders);
+route.get("/:id", getOrderById);
 route.post("/", createOrder);
 route.patch("/:id", adminUpdateOrder);
 route.delete("/:id", adminDeleteOrder);

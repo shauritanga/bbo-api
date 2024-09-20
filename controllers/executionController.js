@@ -172,6 +172,7 @@ module.exports.processExecutionCreation = async (req, res) => {
     res.status(200).json({ message: "Data saved successfully" });
   } catch (error) {
     // Compensate in case of failure
+    console.log(error);
     await compensate(
       execution,
       transaction,
