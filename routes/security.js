@@ -1,5 +1,25 @@
 const express = require("express");
 const Security = require("../models/security.js");
+
+const { body, validationResult } = require("express-validator");
+
+const validationRules = [
+  body("name").isString().notEmpty().withMessage("Name is required"),
+  body("price")
+    .isNumeric()
+    .withMessage("Price must be a number")
+    .custom((value) => {
+      if (value < 0) {
+        throw new Error("Price must be greater than zero");
+      }
+      return true;
+    }),
+];
+
+const {
+  editSecurity,
+  deleteSecurity,
+} = require("../controllers/securityController.js");
 const route = express.Router();
 
 route.get("/", async (req, res) => {
@@ -16,18 +36,8 @@ route.get("/:id", async (req, res) => {
   }
 });
 
-route.post("/", async (req, res) => {
-  const security = Security({
-    ...req.body,
-  });
-  const saveResult = await security.save();
-  res.send(saveResult);
-});
+route.post("/", validationRules);
 
-route.patch("/:id", async (req, res) => {
-  console.log(req.body);
-  // const security = await Security.findOne({ _id: req.params.id });
-
-  res.send({ message: "Data saved successfully" });
-});
+route.patch("/:id", validationRules, editSecurity);
+route.delete("/:id", deleteSecurity);
 module.exports = route;

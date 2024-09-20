@@ -15,7 +15,6 @@ const createProfile = async (req, res) => {
 const getAllProfiles = async (req, res) => {
   try {
     const profile = await Profile.find({});
-    console.log(profile);
     res.status(201).json(profile);
   } catch (error) {}
 };
@@ -24,7 +23,7 @@ const getProfileByCustomerId = async (req, res) => {
   const id = req.params.id;
   try {
     const profile = await Profile.findOne({ user_id: id });
-    console.log({ profile });
+   
     res.status(201).json(profile);
   } catch (error) {}
 };

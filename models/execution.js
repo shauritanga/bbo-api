@@ -3,20 +3,21 @@ const mongoose = require("mongoose");
 const dseSchema = new mongoose.Schema(
   {
     id: String,
-    trading_date: {
+    tradingDate: {
       type: Date,
       default: Date.now,
     },
-    settlement_date: {
+    settlementDate: {
       type: Date,
     },
-    client_id: String,
-    security_id: String,
-    order_id: {
+    userId: String,
+    securityId: String,
+    orderId: {
       type: String,
     },
     slip: {
       type: String,
+      unique: true,
     },
     price: {
       type: Number,

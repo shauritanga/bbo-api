@@ -1,9 +1,29 @@
 const express = require("express");
 const Payment = require("../models/payment.js");
+const { body } = require("express-validator");
+
+//     accountId,
+//     userId,
+//     orderId: "",
+//     paymentMethodId,
+
+const validationRules = [
+  body("amount")
+    .isNumeric()
+    .notEmpty()
+    .withMessage("amount is a number and required"),
+  body("reference").isString(),
+  body("description").isString().trim(),
+  body("accountId").isString(),
+  body("userId").isString(),
+  body("paymentMethodId").isString(),
+  body("date").isString(),
+];
 const {
   getAllPaymentMonthly,
   getAllPayments,
-} = require("../controllers/payment.js");
+  createPayment,
+} = require("../controllers/paymentController.js");
 const Transaction = require("../models/transaction.js");
 const route = express.Router();
 
@@ -37,40 +57,7 @@ route.get("/", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-route.post("/", async (req, res) => {
-  const {
-    transaction_date,
-    amount,
-    reference,
-    category,
-    description,
-    status,
-    account_id,
-    client_id,
-    payment_method_id,
-  } = req.body;
-
-  try {
-    const payment = Transaction({
-      title: description,
-      amount,
-      transaction_date,
-      category,
-      account_id,
-      client_id,
-      reference,
-      status,
-      payment_method_id,
-      description,
-    });
-    console.log(payment);
-    const resi = await payment.save();
-    console.log(resi);
-    res.status(201).json({ message: "Receipt created successfully" });
-  } catch (error) {
-    console.log(error);
-  }
-});
+route.post("/", validationRules, createPayment);
 
 route.get("/:id", async (req, res) => {
   const payment = await Payment.find({ _id: req.params.id });

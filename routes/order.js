@@ -1,6 +1,11 @@
 const express = require("express");
 const Order = require("../models/order.js");
-const { getAllOrders, createOrder } = require("../controllers/order.js");
+const {
+  getAllOrders,
+  createOrder,
+  adminDeleteOrder,
+  adminUpdateOrder,
+} = require("../controllers/orderController.js");
 const Customer = require("../models/customer.js");
 const Security = require("../models/security.js");
 const route = express.Router();
@@ -8,9 +13,11 @@ const route = express.Router();
 //ADMIN ROUTE
 route.get("/all", getAllOrders);
 route.post("/", createOrder);
+route.patch("/:id", adminUpdateOrder);
+route.delete("/:id", adminDeleteOrder);
 
 route.get("/", async (req, res) => {
-  const orders = await Order.find({}, { password: 0 });
+  const orders = await Order.find({}).sort({ date: -1 });
 
   res.status(200).json(orders);
 });

@@ -33,26 +33,13 @@ const path = require("path");
 const fileRoute = require("./routes/uploadFile.js");
 const profileRoutes = require("./routes/profile.js");
 const accountRoutes = require("./routes/account.js");
+const { auditMiddleware } = require("./middleware/index.js");
 
 dotenv.config();
 
 const { protect } = "./middleware/auth.js";
 
 const app = express();
-// const session = require("express-session");
-// app.use(
-//   session({
-//     secret: process.env.SESSION_SECRET, // Choose a strong secret
-//     resave: false,
-//     saveUninitialized: false,
-//     cookie: {
-//       maxAge: 20000, // 20 seconds in milliseconds
-//       sameSite: "strict", // Adjust this based on your security needs
-//       httpOnly: true, // Prevent client-side access to cookie
-//       secure: process.env.NODE_ENV === "production", // Use in production for HTTPS
-//     },
-//   })
-// );
 
 app.use(express.json());
 app.use(logger("tiny"));
@@ -61,10 +48,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(cors());
 app.options("/api/v1/financial-years", cors());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// app.use(passport.initialize());
-
-// app.use(passport.session());
+app.use(auditMiddleware);
 
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/payments", paymentRoute);
@@ -98,7 +82,7 @@ app.use("/api/v1/fidelity", fidelityRoute);
 
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 mongoose
   .connect(process.env.MONGO_URL)

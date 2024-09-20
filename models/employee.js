@@ -23,6 +23,8 @@ const employeeSchema = mongoose.Schema(
     status: {
       type: String,
     },
+    otp: { type: Number },
+    otpExpiry: { type: Number },
   },
   { timestamps: true }
 );

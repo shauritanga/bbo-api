@@ -1,5 +1,9 @@
 const express = require("express");
 const User = require("../models/user.js");
+const {
+  adminCreateCustomer,
+  adminUpdateCustomer,
+} = require("../controllers/customerController.js");
 const route = express.Router();
 
 route.get("/", async (req, res) => {
@@ -25,30 +29,24 @@ route.get("/clients/:token", async (req, res) => {
   }
 });
 
-route.post("/", async (req, res) => {
-  const customer = User({
-    ...req.body,
-  });
+route.post("/admin", adminCreateCustomer);
 
-  await customer.save();
+// route.patch("/:id", adminUpdateCustomer);
 
-  res.send({ message: "Data saved successfully" });
-});
+// route.patch("/:id", async (req, res) => {
+//   try {
+//     const updatedCustomer = await User.findByIdAndUpdate(
+//       req.params.id,
+//       { $set: { ...req.body, status: "active" } },
 
-route.patch("/:id", async (req, res) => {
-  try {
-    const updatedCustomer = await User.findByIdAndUpdate(
-      req.params.id,
-      { $set: { ...req.body, status: "active" } },
+//       { new: true }
+//     );
 
-      { new: true }
-    );
-
-    res.status(200).json({ message: "Customer data updated successfully" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+//     res.status(200).json({ message: "Customer data updated successfully" });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// });
 
 route.delete("/:id", async (req, res) => {
   const deletedCustomer = await User.findByIdAndDelete(req.params.id);

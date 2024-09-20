@@ -5,6 +5,7 @@ const {
   getAllTransactions,
   getTransactionByCustomerId,
   updateTransaction,
+  processUpdateTransaction,
 } = require("../controllers/transactionController.js");
 // Import other controllers
 
@@ -13,7 +14,7 @@ const router = express.Router();
 router.get("/:id", getTransactionByCustomerId);
 router.post("/", createTransaction);
 router.get("/", getAllTransactions);
-router.patch("/:id", updateTransaction);
+router.patch("/:id", processUpdateTransaction);
 // Add routes for other actions (GET, PATCH, DELETE)
 
 module.exports = router;

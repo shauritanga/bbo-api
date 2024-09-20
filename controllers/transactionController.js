@@ -1,11 +1,92 @@
 // transactionController.js
+const Statement = require("../models/statement.js");
 const Transaction = require("../models/transaction.js");
+const User = require("../models/user.js");
+
+//SAGA PATTERN
+const updateTransaction = async (transactionId, status) => {
+  const transaction = await Transaction.findById(transactionId);
+  if (!transaction) {
+    throw new Error("Transaction not found!");
+  }
+  transaction.status = status;
+  return transaction.save();
+};
+
+const createStatement = async (transaction, balance) => {
+  let newStatement;
+
+  if (transaction.category === "payment") {
+    newStatement = new Statement({
+      particulars: transaction.description,
+      quantity: 1,
+      userId: transaction.userId,
+      reference: transaction.reference,
+      price: transaction.amount,
+      date: transaction.transactionDate,
+      type: "debit",
+      credit: 0,
+      debit: transaction.amount,
+      balance: balance - parseFloat(transaction.amount),
+    });
+  } else if (transaction.category === "receipt") {
+    newStatement = new Statement({
+      // particulars: transaction.description,
+      // quantity: 1,
+      // userId: transaction.userId,
+      // reference: transaction.reference,
+      // price: transaction.amount,
+      // date: transaction.transactionDate,
+      // type: "credit",
+      // credit: transaction.amount,
+      // debit: 0,
+      // balance: balance + parseFloat(transaction.amount),
+    });
+  } else {
+    newStatement = new Statement({
+      particulars: transaction.description,
+      quantity: 1,
+      userId: transaction.userId,
+      reference: transaction.reference,
+      price: transaction.amount,
+      date: transaction.transactionDate,
+      type: "debit",
+      credit: 0,
+      debit: transaction.amount,
+      balance: balance - parseFloat(transaction.amount),
+    });
+  }
+
+  return newStatement.save();
+};
+
+const updateUserWallet = async (userId, newBalance) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found!");
+  }
+  user.wallet = newBalance.toString();
+  return user.save();
+};
+
+const compensate = async (transaction, newStatement, user, originalWallet) => {
+  // Revert transaction status
+  transaction.status = "pending"; // Assuming you keep track of previous status
+  await transaction.save();
+
+  // Revert statement
+  await Statement.findByIdAndDelete(newStatement._id);
+
+  // Revert user wallet
+  user.wallet = originalWallet.toString();
+  await user.save();
+};
 
 module.exports.createTransaction = async (req, res) => {
   try {
     const transaction = new Transaction(req.body);
     const savedTransaction = await transaction.save();
-    res.status(201).json(savedTransaction); // 201 Created
+    res.status(201).json({ message: "Transaction created" }); // 201 Created
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -13,68 +94,67 @@ module.exports.createTransaction = async (req, res) => {
 
 module.exports.getAllTransactions = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; // Default to page 1
-    const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page
-
-    const skip = (page - 1) * limit; // Calculate the number of documents to skip
-
-    const transactions = await Transaction.find({ status: "new" })
-      .skip(skip)
-      .limit(limit);
-
-    const totalDocuments = transactions.length;
-    const totalPages = Math.ceil(totalDocuments / limit);
+    const transactions = await Transaction.find({
+      status: "pending",
+      category: "payment",
+    }).sort({
+      transactionDate: -1,
+    });
 
     res.status(200).json({
       data: transactions,
-      currentPage: page,
-      totalPages: totalPages,
-      totalDocuments: totalDocuments,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-module.exports.updateTransaction = async (req, res) => {
+module.exports.processUpdateTransaction = async (req, res) => {
+  const transactionId = req.params.id;
+  const { status } = req.body;
+
+  let transaction;
+  let newStatement;
+  let user;
+  let originalWallet;
+
   try {
-    const transactionId = req.params.id;
-    const updateData = req.body;
+    // Step 1: Update Transaction
+    transaction = await updateTransaction(transactionId, status);
 
-    // 1. Input Validation (Optional but Recommended)
-    // Validate updateData using a schema (e.g., Joi) to ensure correct data types and structure
+    // Step 2: Get Current Statement
+    const statement = await Statement.find({ userId: transaction.userId })
+      .sort({ date: -1 })
+      .limit(1);
+    const balance = statement[0]?.balance || 0;
 
-    // 2. Find and Update
-    const updatedTransaction = await Transaction.findByIdAndUpdate(
-      transactionId,
-      { $set: updateData },
-      { new: true } // Return the updated document
-    );
+    // Step 3: Create Statement
+    newStatement = await createStatement(transaction, balance);
 
-    // 3. Handle Not Found
-    if (!updatedTransaction) {
-      return res.status(404).json({ message: "Transaction not found" });
-    }
+    // Step 4: Update User Wallet
+    user = await User.findById(transaction.userId);
+    originalWallet = user.wallet;
+    const newWallet = newStatement.balance;
+    await updateUserWallet(user._id, newWallet);
 
-    // 4. Success Response
-    res.status(200).json(updatedTransaction);
+    res.status(200).json({ message: "Data updated successfully" });
   } catch (error) {
-    // 5. Error Handling
-    console.error("Error updating transaction:", error);
+    console.log(error);
+
+    // Compensate in case of failure
+    if (transaction) {
+      await compensate(transaction, newStatement, user, originalWallet);
+    }
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-// - getTransactionById
-// - updateTransaction
-// - deleteTransaction (consider soft deletes)
 
 module.exports.getTransactionByCustomerId = async (req, res) => {
   const customerId = req.params.id;
 
   try {
-    const transactions = await Transaction.find({ client_id: customerId }).sort(
-      { transaction_date: 1 }
-    );
-    console.log("this");
+    const transactions = await Transaction.find({ userId: customerId }).sort({
+      transactionDate: -1,
+    });
     if (!transactions) {
       return res.status(404).json({ message: "Transactions not found" });
     }

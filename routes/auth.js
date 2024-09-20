@@ -167,7 +167,7 @@ router.post("/clients/otp", async (req, res) => {
   }
 
   const mailOptions = {
-    from: '"Alpha Capital" admin@alphafunds.co.tz',
+    from: '"Alpha Capital" admin@alphacapital.co.tz',
     to: email,
     subject: "One-Time Password (OTP)",
     text: `Your One-Time Password (OTP) is: ${otp}`,
@@ -197,6 +197,8 @@ router.post("/otp", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    console.log("=================1=====================");
+
     const mailOptions = {
       from: '"Alpha Capital" admin@alphafunds.co.tz',
       to: email,
@@ -204,7 +206,11 @@ router.post("/otp", async (req, res) => {
       text: `Your One-Time Password (OTP) is: ${otp}`,
     };
 
+    console.log("=================2=====================");
+
     const info = await transporter.sendMail(mailOptions);
+
+    console.log("=================3=====================");
     if (!info) {
       throw new Error("Fail to send resent passwordd email");
     }
@@ -219,7 +225,7 @@ router.post("/verify-otp", async (req, res) => {
   const { email, otp } = req.body;
   const user = await Otp.findOne({ email, otp });
   if (!user) {
-    return res.status(400).send("Invalid OTP");
+    return res.status(400).json({ message: "Invalid OTP" });
   }
   await Otp.deleteOne({ email, otp });
   res.send(user);
