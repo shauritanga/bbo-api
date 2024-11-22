@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const dseSchema = new mongoose.Schema(
   {
-    id: String,
     tradingDate: {
       type: Date,
       default: Date.now,
@@ -10,11 +9,8 @@ const dseSchema = new mongoose.Schema(
     settlementDate: {
       type: Date,
     },
-    userId: String,
-    securityId: String,
-    orderId: {
-      type: String,
-    },
+    order: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     slip: {
       type: String,
       unique: true,
@@ -30,7 +26,6 @@ const dseSchema = new mongoose.Schema(
       type: Number,
     },
     type: String,
-    status: { type: String, default: "pending" },
     dse: Number,
     cds: Number,
     cmsa: Number,

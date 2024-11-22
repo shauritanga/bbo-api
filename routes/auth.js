@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 const Customer = require("../models/customer.js");
 const User = require("../models/user.js");
 const Otp = require("../models/otp.js");
+const { login, verifyOTP } = require("../controllers/authController.js");
 const router = express.Router();
 
 const generateActivationToken = () => {
@@ -97,30 +98,31 @@ router.post("/login/clients", async (req, res) => {
   }
 });
 
-router.post("/login/employees", async (req, res) => {
-  const { username } = req.body;
+// router.post("/login/employees", async (req, res) => {
+//   const { username } = req.body;
 
-  try {
-    const employee = await Employee.findOne(
-      { email: username },
-      { _id: 0, __v: 0 }
-    ).populate("role");
+//   try {
+//     const employee = await Employee.findOne(
+//       { email: username },
+//       { _id: 0, __v: 0 }
+//     ).populate("role");
 
-    if (!employee) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-    // Token Generation (for authentication in future requests)
-    const token = jwt.sign({ employeeId: employee._id }, "ilovecode");
+//     if (!employee) {
+//       return res.status(400).json({ message: "Invalid credentials" });
+//     }
+//     // Token Generation (for authentication in future requests)
+//     const token = jwt.sign({ employeeId: employee._id }, "ilovecode");
 
-    res.json({
-      message: "Login successful",
-      token,
-      user: employee,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
+//     res.json({
+//       message: "Login successful",
+//       token,
+//       user: employee,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+router.post("/login/employees", login);
 
 router.get("/activate", async (req, res) => {
   //getting email and token from the link
@@ -221,15 +223,17 @@ router.post("/otp", async (req, res) => {
   }
 });
 
-router.post("/verify-otp", async (req, res) => {
-  const { email, otp } = req.body;
-  const user = await Otp.findOne({ email, otp });
-  if (!user) {
-    return res.status(400).json({ message: "Invalid OTP" });
-  }
-  await Otp.deleteOne({ email, otp });
-  res.send(user);
-});
+router.post("/verify-otp", verifyOTP);
+
+// router.post("/verify-otp", async (req, res) => {
+//   const { email, otp } = req.body;
+//   const user = await Otp.findOne({ email, otp });
+//   if (!user) {
+//     return res.status(400).json({ message: "Invalid OTP" });
+//   }
+//   await Otp.deleteOne({ email, otp });
+//   res.send(user);
+// });
 
 router.post("/clients/request-reset-password", async (req, res) => {
   console.log(req.body);

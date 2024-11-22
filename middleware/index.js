@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const Employee = require("../models/employee");
 const AuditTrail = require("../models/auditTrail");
 // const roles = require("./roles"); // Import roles from the roles.js file
 
@@ -22,20 +23,23 @@ const AuditTrail = require("../models/auditTrail");
 
 const authenticated = async (req, res, next) => {
   const token = req.headers["authorization"]?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await Employee.findById(decoded.id);
+
     if (!user) return res.status(401).json({ error: "Invalid token" });
 
     // Calculate token expiration time
     const now = Math.floor(Date.now() / 1000);
     const timeToExpiry = decoded.exp - now;
 
-    if (timeToExpiry < 300) {
+    if (timeToExpiry > 0 && timeToExpiry < 300) {
       const newToken = jwt.sign(
-        { id: user.id, role: user.role },
+        { id: user._id, role: user.role, email: user.email, name: user.name },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN }
       );
@@ -52,7 +56,6 @@ const authenticated = async (req, res, next) => {
 //Audit trail
 
 const auditMiddleware = async (req, res, next) => {
-  const userId = req.user ? req.user._id : null; // Assuming req.user contains authenticated user info
   const resource = req.originalUrl; // The resource being accessed (e.g., /orders)
   const action = req.method; // HTTP method (e.g., GET, POST, PUT, DELETE)
 
@@ -62,10 +65,9 @@ const auditMiddleware = async (req, res, next) => {
     params: req.params,
     query: req.query,
   });
-
   // Log the audit trail
   await AuditTrail.create({
-    userId: userId || null, // Store userId if available, otherwise null for guest actions
+    userId: req.user ? req.user._id : null, // Store userId if available, otherwise null for guest actions
     action,
     resource,
     details,

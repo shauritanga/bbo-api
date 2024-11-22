@@ -3,21 +3,28 @@ const TransactionCounter = require("./counter/transactionCounter.js");
 
 const transactionSchema = new mongoose.Schema(
   {
-    id: { type: String },
     transactionDate: { type: Date, default: Date.now },
-    amount: { type: String },
-    debit: { type: String },
-    credit: { type: String },
-    reference: { type: String },
+    settlementDate: { type: Date },
+    amount: { type: Number },
+    quantity: { type: Number },
+    price: { type: Number },
+    debit: { type: Number },
+    credit: { type: Number },
+    reference: { type: String, unique: true },
     category: { type: String },
     action: { type: String },
     description: { type: String },
     status: { type: String, default: "pending" },
-    accountId: { type: String },
-    userId: { type: String },
-    orderId: { type: String },
+    account: { type: mongoose.Schema.Types.ObjectId, ref: "Account" },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    order: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Employee" },
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Employee" },
     uid: { type: String },
-    paymentMethodId: { type: String, required: false },
+    paymentMethodId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PaymentMethod",
+    },
   },
   { timestamps: true }
 );

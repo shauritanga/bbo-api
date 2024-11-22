@@ -64,33 +64,65 @@ const adminCreateCustomer = async (req, res) => {
 
     await customer.save();
 
-    const link = `${process.env.CLIENT_URL}/login`;
+    // const link = `${process.env.CLIENT_URL}/login`;
 
-    const mailOptions = {
-      from: '"Alpha Capital" admin@alphafunds.co.tz',
-      to: email,
-      subject: "Account Creation",
-      html: `<h6>Hi,${name}!<h6>
-       <p>Thank you for trusting us. You account has been successfully created</p>
-       <br/>
-       <p>Your login credentials</p>
-       <p>email: ${email}</p>
-       <p>password:${password}</p>
-       <p>Please visit ${link} to get srated!</p><br/>
-       <em>Alpha Capital</em>
-       `,
-    };
+    // const mailOptions = {
+    //   from: '"Alpha Capital" admin@alphafunds.co.tz',
+    //   to: email,
+    //   subject: "Account Creation",
+    //   html: `<h6>Hi,${name}!<h6>
+    //    <p>Thank you for trusting us. You account has been successfully created</p>
+    //    <br/>
+    //    <p>Your login credentials</p>
+    //    <p>email: ${email}</p>
+    //    <p>password:${password}</p>
+    //    <p>Please visit ${link} to get srated!</p><br/>
+    //    <em>Alpha Capital</em>
+    //    `,
+    // };
 
-    const info = await transporter.sendMail(mailOptions);
-    if (!info) {
-      return res.status(500).json({ message: "Something went wrong" });
-    }
+    // const info = await transporter.sendMail(mailOptions);
+    // if (!info) {
+    //   return res.status(500).json({ message: "Something went wrong" });
+    // }
     res.status(201).json({ message: "User created successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-const adminUpdateCustomer = async (req, res) => {};
+const adminUpdateCustomer = async (req, res) => {
+  const updateData = req.body;
+  const userId = req.params.id;
+  console.log({ updateData });
 
-module.exports = { adminCreateCustomer };
+  try {
+    const updates = {
+      nationality: updateData.country,
+      name: updateData.name,
+      phone: updateData.phone,
+      email: updateData.email,
+      idType: updateData.idType,
+      idNumber: updateData.idNumber,
+      bankName: updateData.bankName,
+      bankAccountNumber: updateData.bankAccount,
+      dseAccount: updateData.cdsAccount,
+    };
+
+    const result = await User.findOneAndUpdate(
+      { _id: userId }, // filter
+      { $set: updates }, // update
+      { new: true } // return the updated document
+    );
+    res.status(200).json({ message: "Customer updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const updateUserWallet = async (req, res) => {
+  const { userWallet } = req.body;
+  console.log({ userWallet });
+};
+
+module.exports = { adminCreateCustomer, updateUserWallet, adminUpdateCustomer };

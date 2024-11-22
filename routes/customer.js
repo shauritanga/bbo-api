@@ -3,6 +3,7 @@ const User = require("../models/user.js");
 const {
   adminCreateCustomer,
   adminUpdateCustomer,
+  updateUserWallet,
 } = require("../controllers/customerController.js");
 const route = express.Router();
 
@@ -52,6 +53,9 @@ route.delete("/:id", async (req, res) => {
   const deletedCustomer = await User.findByIdAndDelete(req.params.id);
   res.send({ message: "Item deleted successfully" });
 });
+
+route.post("/:id", updateUserWallet);
+route.patch("/:id", adminUpdateCustomer);
 
 const customerRoute = route;
 module.exports = customerRoute;

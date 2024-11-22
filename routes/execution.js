@@ -10,9 +10,8 @@ const {
 const router = express.Router();
 
 router.get("/", getAllExecutions);
-router.get("/clients/:id", getOrderExecutions);
-router.get("/statement/:id", getExecutionByClientId);
+// router.get("/clients/:id", getOrderExecutions);
+router.get("/clients/:id", getExecutionByClientId);
 router.get("/:id", getExecution);
-router.post("/", processExecutionCreation);
 
 module.exports = router;

@@ -19,6 +19,7 @@ const validationRules = [
 const {
   editSecurity,
   deleteSecurity,
+  createSecurity,
 } = require("../controllers/securityController.js");
 const route = express.Router();
 
@@ -36,7 +37,7 @@ route.get("/:id", async (req, res) => {
   }
 });
 
-route.post("/", validationRules);
+route.post("/", validationRules, createSecurity);
 
 route.patch("/:id", validationRules, editSecurity);
 route.delete("/:id", deleteSecurity);
